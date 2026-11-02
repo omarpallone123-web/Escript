@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ScriptHunt — Find Roblox Scripts</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --base: #0a0a0f;
+    --surface: #111118;
+    --card: #1a1a2e;
+    --border: #2a2a4a;
+    --accent: #7c3aed;
+    --accent-glow: rgba(124, 58, 237, 0.3);
+    --accent-bright: #a855f7;
+    --text: #e2e8f0;
+    --text-dim: #94a3b8;
+    --text-faint: #475569;
+    --green: #22d3ee;
+    --red: #f43f5e;
+    --yellow: #fbbf24;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  *, *::before, *::after { box-sizing: inherit; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--base);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --base: #0a0a0f; }
+  }
+
+  /* HEADER */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    background: rgba(10,10,15,0.92);
+    backdrop-filter: blur(12px);
+    z-index: 100;
+  }
+  .logo {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--accent-bright);
+    letter-spacing: -0.5px;
+  }
+  .logo span { color: var(--text-dim); font-weight: 300; }
+  .header-tag {
+    font-size: 11px;
+    color: var(--text-faint);
+    border: 1px solid var(--border);
+    padding: 3px 8px;
+  }
+
+  /* HERO */
+  .hero {
+    padding: 64px 24px 40px;
+    max-width: 800px;
+    margin: 0 auto;
+    text-align: center;
+  }
+  .hero-title {
+    font-size: clamp(28px, 5vw, 48px);
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.1;
+    margin-bottom: 12px;
+    letter-spacing: -1px;
+  }
+  .hero-title .accent { color: var(--accent-bright); }
+  .hero-sub {
+    color: var(--text-dim);
+    font-size: 13px;
+    font-weight: 300;
+    margin-bottom: 36px;
+  }
+
+  /* SEARCH */
+  .search-wrap {
+    position: relative;
+    max-width: 600px;
+    margin: 0 auto 16px;
+  }
+  .search-input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    padding: 14px 120px 14px 16px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .search-input::placeholder { color: var(--text-faint); }
+  .search-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+  .search-btn {
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 100%;
+    padding: 0 20px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s;
+    letter-spacing: 0.5px;
+  }
+  .search-btn:hover { background: var(--accent-bright); }
+  .search-btn:active { transform: scale(0.98); }
+
+  /* FILTERS */
+  .filters {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+  }
+  .filter-chip {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 4px 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .filter-chip:hover, .filter-chip.active {
+    border-color: var(--accent);
+    color: var(--accent-bright);
+    background: var(--accent-glow);
+  }
+
+  /* QUICK TAGS */
+  .quick-tags {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 12px;
+  }
+  .qtag {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text-faint);
+    font-size: 11px;
+    padding: 3px 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .qtag:hover { color: var(--text); border-color: var(--accent); }
+
+  /* STATS BAR */
+  .stats-bar {
+    max-width: 860px;
+    margin: 0 auto 24px;
+    padding: 10px 24px;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 24px;
+    color: var(--text-faint);
+    font-size: 11px;
+    align-items: center;
+  }
+  .stats-bar .stat { display: flex; gap: 6px; align-items: center; }
+  .stat-val { color: var(--accent-bright); font-weight: 700; }
+
+  /* RESULTS */
+  .results-section {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 24px 64px;
+  }
+  .results-label {
+    font-size: 11px;
+    color: var(--text-faint);
+    margin-bottom: 16px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .results-label span { color: var(--accent-bright); }
+
+  /* CARD */
+  .script-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    margin-bottom: 12px;
+    transition: border-color 0.2s;
+    overflow: hidden;
+  }
+  .script-card:hover { border-color: var(--accent); }
+  .card-header {
+    padding: 14px 16px 10px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .card-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .card-meta {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .tag {
+    font-size: 10px;
+    padding: 2px 7px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+  }
+  .tag-game { background: rgba(124,58,237,0.2); color: var(--accent-bright); border: 1px solid rgba(124,58,237,0.4); }
+  .tag-type { background: rgba(34,211,238,0.1); color: var(--green); border: 1px solid rgba(34,211,238,0.3); }
+  .tag-source { background: rgba(251,191,36,0.1); color: var(--yellow); border: 1px solid rgba(251,191,36,0.3); }
+  .card-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .btn-copy, .btn-expand {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 6px 14px;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .btn-copy {
+    background: var(--accent);
+    color: #fff;
+  }
+  .btn-copy:hover { background: var(--accent-bright); }
+  .btn-copy.copied { background: #16a34a; }
+  .btn-expand {
+    background: transparent;
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+  }
+  .btn-expand:hover { border-color: var(--accent); color: var(--accent-bright); }
+
+  /* CODE PREVIEW */
+  .code-preview {
+    background: #0d0d1a;
+    border-top: 1px solid var(--border);
+    padding: 12px 16px;
+    font-size: 12px;
+    color: #94a3b8;
+    line-height: 1.7;
+    max-height: 120px;
+    overflow: hidden;
+    position: relative;
+    cursor: pointer;
+  }
+  .code-preview.expanded { max-height: none; }
+  .code-preview::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 40px;
+    background: linear-gradient(transparent, #0d0d1a);
+    pointer-events: none;
+  }
+  .code-preview.expanded::after { display: none; }
+  .kw { color: #c084fc; }
+  .str { color: #86efac; }
+  .fn { color: #67e8f9; }
+  .cm { color: #475569; }
+  .num { color: #fbbf24; }
+
+  /* LOADSTRING highlight */
+  .ls { color: #f43f5e; font-weight: 700; }
+
+  /* EMPTY STATE */
+  .empty-state {
+    text-align: center;
+    padding: 80px 24px;
+    color: var(--text-faint);
+  }
+  .empty-icon { font-size: 48px; margin-bottom: 16px; }
+  .empty-state h3 { color: var(--text-dim); margin-bottom: 8px; }
+
+  /* LOADING */
+  .loading {
+    text-align: center;
+    padding: 60px;
+    color: var(--text-faint);
+  }
+  .loader {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 12px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* CURSOR BLINK */
+  .blink {
+    animation: blink 1s step-end infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--base); }
+  ::-webkit-scrollbar-thumb { background: var(--border); }
+  ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+  @media (max-width: 600px) {
+    .card-header { flex-direction: column; }
+    .card-actions { width: 100%; }
+    .btn-copy, .btn-expand { flex: 1; }
+    .stats-bar { flex-wrap: wrap; gap: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Script<span>Hunt</span></div>
+  <div class="header-tag">v1.0 // aggregator</div>
+</header>
+
+<section class="hero">
+  <h1 class="hero-title">Find <span class="accent">Roblox Scripts</span><span class="blink">_</span></h1>
+  <p class="hero-sub">Cerca script pubblici — loadstring, execute, require — da V3rmillion, Pastebin, GitHub e altro</p>
+
+  <div class="search-wrap">
+    <input
+      class="search-input"
+      id="searchInput"
+      type="text"
+      placeholder="es. blade ball, blox fruits, arsenal..."
+      autocomplete="off"
+    />
+    <button class="search-btn" id="searchBtn">CERCA</button>
+  </div>
+
+  <div class="filters">
+    <button class="filter-chip active" data-filter="all">Tutti</button>
+    <button class="filter-chip" data-filter="loadstring">loadstring()</button>
+    <button class="filter-chip" data-filter="require">require()</button>
+    <button class="filter-chip" data-filter="execute">execute</button>
+    <button class="filter-chip" data-filter="gui">GUI</button>
+  </div>
+
+  <div class="quick-tags" id="quickTags">
+    <button class="qtag">blade ball</button>
+    <button class="qtag">blox fruits</button>
+    <button class="qtag">arsenal</button>
+    <button class="qtag">jailbreak</button>
+    <button class="qtag">da hood</button>
+    <button class="qtag">pet simulator</button>
+    <button class="qtag">murder mystery</button>
+    <button class="qtag">brookhaven</button>
+  </div>
+</section>
+
+<div class="stats-bar" id="statsBar" style="display:none">
+  <div class="stat">RISULTATI: <span class="stat-val" id="countStat">0</span></div>
+  <div class="stat">QUERY: <span class="stat-val" id="queryStat">—</span></div>
+  <div class="stat">FONTI: <span class="stat-val">Pastebin · V3rmillion · GitHub</span></div>
+</div>
+
+<section class="results-section">
+  <div class="results-label" id="resultsLabel" style="display:none">
+    SCRIPTS TROVATI — <span id="labelCount">0</span> RISULTATI
+  </div>
+  <div id="resultsContainer">
+    <div class="empty-state">
+      <div class="empty-icon">🔍</div>
+      <h3>Cerca un gioco</h3>
+      <p>Digita il nome del gioco Roblox e premi CERCA</p>
+    </div>
+  </div>
+</section>
+
+<script>
+// ─── SCRIPT DATABASE ───────────────────────────────────────────────────────
+// Script pubblici simulati — in produzione faresti fetch da API/scraper reale
+const SCRIPT_DB = [
+  {
+    id: 1,
+    game: "Blade Ball",
+    title: "Blade Ball — Auto Parry + Speed Hack",
+    type: "loadstring",
+    source: "Pastebin",
+    tags: ["blade ball", "bladeball", "ball", "parry"],
+    code: `-- Blade Ball Auto Parry Script
+-- Source: Pastebin (public)
+-- Auto parry + speed boost
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+
+-- Config
+local CONFIG = {
+    AutoParry = true,
+    ParryRange = 50,
+    WalkSpeed = 32,
+    JumpPower = 75,
+}
+
+-- loadstring execute
+loadstring(game:HttpGet(
+    "https://raw.githubusercontent.com/public-scripts/bladeball/main/autoparry.lua"
+))()
+
+-- Speed hack
+LocalPlayer.Character:WaitForChild("Humanoid").WalkSpeed = CONFIG.WalkSpeed
+LocalPlayer.Character.Humanoid.JumpPower = CONFIG.JumpPower
+
+print("[ScriptHunt] Blade Ball script loaded — Auto Parry: ON")`,
+  },
+  {
+    id: 2,
+    game: "Blade Ball",
+    title: "Blade Ball — Full GUI Hub (Infinite Coins, Auto Win)",
+    type: "loadstring",
+    source: "V3rmillion",
+    tags: ["blade ball", "bladeball", "gui", "coins", "hub"],
+    code: `-- Blade Ball Full Hub
+-- Via V3rmillion thread #8821xx (public)
+
+local repo = "https://raw.githubusercontent.com/public-rblx/bladeball-hub/main/"
+
+local GUI = loadstring(game:HttpGet(repo .. "main.lua"))()
+
+-- Hub config
+GUI.AutoParry    = true
+GUI.InfiniteCoins = false  -- client visual only
+GUI.WinAura      = true
+GUI.ESPBalls     = true
+
+GUI:Init()
+print("[ScriptHunt] Hub loaded OK")`,
+  },
+  {
+    id: 3,
+    game: "Blox Fruits",
+    title: "Blox Fruits — Auto Farm + Mastery (loadstring)",
+    type: "loadstring",
+    source: "GitHub",
+    tags: ["blox fruits", "bloxfruits", "farm", "mastery", "auto"],
+    code: `-- Blox Fruits Auto Farm
+-- Public GitHub release — MIT License
+
+local Settings = {
+    AutoFarm    = true,
+    AutoMastery = true,
+    AutoQuest   = true,
+    TargetLevel = 2450,
+    UseFruit    = "Leopard",
+}
+
+-- Main loader
+loadstring(game:HttpGet(
+    "https://raw.githubusercontent.com/Akechi-kun/Blox-Fruits-Script/main/BloxFruits.lua",
+    true
+))()`,
+  },
+  {
+    id: 4,
+    game: "Blox Fruits",
+    title: "Blox Fruits — Sea Beast Farm + Auto Chest",
+    type: "execute",
+    source: "Pastebin",
+    tags: ["blox fruits", "bloxfruits", "sea beast", "chest", "farm"],
+    code: `-- Sea Beast Auto Farm
+-- Pastebin public paste
+
+local plr = game.Players.LocalPlayer
+local char = plr.Character or plr.CharacterAdded:Wait()
+
+local SeaBeastFarm = {}
+SeaBeastFarm.Active = true
+SeaBeastFarm.TeleportToTarget = true
+
+-- Execute pattern (no loadstring)
+local function farmLoop()
+    while SeaBeastFarm.Active do
+        -- teleport logic, attack, loot
+        task.wait(0.1)
+    end
+end
+
+task.spawn(farmLoop)
+print("[BF] Sea Beast farm started")`,
+  },
+  {
+    id: 5,
+    game: "Arsenal",
+    title: "Arsenal — Aimbot + ESP + Silent Aim",
+    type: "loadstring",
+    source: "V3rmillion",
+    tags: ["arsenal", "aimbot", "esp", "silent aim", "aim"],
+    code: `-- Arsenal Aimbot Script
+-- V3rmillion public release
+
+local config = {
+    Aimbot = {
+        Enabled  = true,
+        FOV      = 150,
+        Smoothing = 0.1,
+        Bone     = "Head",
+        TeamCheck = true,
+    },
+    ESP = {
+        Enabled   = true,
+        BoxESP    = true,
+        NameESP   = true,
+        HealthBar = true,
+        Distance  = true,
+    }
+}
+
+loadstring(game:HttpGet(
+    "https://raw.githubusercontent.com/public-aim/arsenal/main/loader.lua"
+))()`,
+  },
+  {
+    id: 6,
+    game: "Jailbreak",
+    title: "Jailbreak — Auto Rob + Car Teleport",
+    type: "loadstring",
+    source: "GitHub",
+    tags: ["jailbreak", "auto rob", "teleport", "car", "money"],
+    code: `-- Jailbreak Auto Rob
+-- Public GitHub
+
+local JB = loadstring(game:HttpGet(
+    "https://raw.githubusercontent.com/mstudio45/jailbreak-script/main/main.lua"
+))()
+
+JB:Configure({
+    AutoRob      = true,
+    RobInterval  = 30,
+    CarTeleport  = true,
+    AutoArrest   = false,
+    NoclipCars   = true,
+})
+
+JB:Start()`,
+  },
+  {
+    id: 7,
+    game: "Da Hood",
+    title: "Da Hood — Silent Aim + Fly + Infinite Ammo",
+    type: "execute",
+    source: "Pastebin",
+    tags: ["da hood", "dahood", "silent aim", "fly", "ammo"],
+    code: `-- Da Hood Script Hub
+-- Pastebin public
+
+local DH = {}
+
+DH.SilentAim = true
+DH.Fly = true
+DH.FlySpeed = 80
+DH.InfiniteAmmo = true
+DH.NoReload = true
+DH.GodMode = false  -- patched
+
+-- Fly implementation
+local UIS = game:GetService("UserInputService")
+local fly_active = false
+
+UIS.InputBegan:Connect(function(key)
+    if key.KeyCode == Enum.KeyCode.F then
+        fly_active = not fly_active
+    end
+end)
+
+loadstring(game:HttpGet("https://pastebin.com/raw/public_dahood"))()`,
+  },
+  {
+    id: 8,
+    game: "Pet Simulator X",
+    title: "Pet Simulator X — Auto Farm + Auto Hatch",
+    type: "require",
+    source: "GitHub",
+    tags: ["pet simulator", "pet sim", "psx", "auto farm", "hatch", "egg"],
+    code: `-- Pet Simulator X Script
+-- require() loader pattern
+
+local PSX = require(game:GetService("ReplicatedStorage").Modules.GameCore)
+
+-- Public script via require pattern
+local Script = loadstring(game:HttpGet(
+    "https://raw.githubusercontent.com/psx-scripts/main/loader.lua"
+))()
+
+Script.AutoFarm    = true
+Script.AutoHatch   = true
+Script.AutoRebirth = false
+Script.TargetEgg   = "Huge"
+
+Script:Run()
+print("[PSX] Script active — farming...")`,
+  },
+  {
+    id: 9,
+    game: "Murder Mystery 2",
+    title: "MM2 — ESP All Players + Sheriff Bot",
+    type: "loadstring",
+    source: "V3rmillion",
+    tags: ["murder mystery", "mm2", "esp", "sheriff", "murderer"],
+    code: `-- Murder Mystery 2 ESP + Bot
+-- V3rmillion public
+
+local MM2 = {}
+
+MM2.ESP = {
+    ShowMurderer = true,
+    ShowSheriff  = true,
+    ShowAll      = true,
+    BoxColor     = { Murderer = Color3.new(1,0,0), Sheriff = Color3.new(0,1,0) }
+}
+
+MM2.SheriffBot = {
+    AutoShoot    = true,
+    TargetMurderer = true,
+    ShootRange   = 100,
+}
+
+loadstring(game:HttpGet(
+    "https://raw.githubusercontent.com/mm2-public/esp/main/init.lua"
+))()`,
+  },
+  {
+    id: 10,
+    game: "Brookhaven",
+    title: "Brookhaven — Fly + Speed + Noclip GUI",
+    type: "gui",
+    source: "Pastebin",
+    tags: ["brookhaven", "fly", "speed", "noclip", "gui"],
+    code: `-- Brookhaven GUI Script
+-- Simple QoL hub — Pastebin public
+
+local ScreenGui = Instance.new("ScreenGui")
+local Frame = Instance.new("Frame")
+-- [GUI setup code...]
+
+local plr = game.Players.LocalPlayer
+local char = plr.Character
+
+-- Noclip
+local noclip = false
+game:GetService("RunService").Stepped:Connect(function()
+    if noclip and char then
+        for _, p in pairs(char:GetDescendants()) do
+            if p:IsA("BasePart") then p.CanCollide = false end
+        end
+    end
+end)
+
+print("[Brookhaven] GUI loaded")`,
+  },
+];
+
+// ─── STATE ─────────────────────────────────────────────────────────────────
+let activeFilter = "all";
+let currentQuery = "";
+let expandedCards = new Set();
+
+// ─── SEARCH LOGIC ──────────────────────────────────────────────────────────
+function searchScripts(query, filter) {
+    const q = query.toLowerCase().trim();
+    if (!q) return [];
+
+    return SCRIPT_DB.filter(script => {
+        // match query against tags + title + game
+        const matchesQuery = !q ||
+            script.tags.some(t => t.includes(q)) ||
+            script.title.toLowerCase().includes(q) ||
+            script.game.toLowerCase().includes(q);
+
+        // match filter
+        const matchesFilter = filter === "all" ||
+            script.type === filter ||
+            (filter === "gui" && script.tags.includes("gui"));
+
+        return matchesQuery && matchesFilter;
+    });
+}
+
+// ─── SYNTAX HIGHLIGHT (minimal) ────────────────────────────────────────────
+function highlight(code) {
+    return code
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/(--[^\n]*)/g, '<span class="cm">$1</span>')
+        .replace(/\b(local|function|end|if|then|else|for|while|do|return|true|false|not|and|or|in|pairs|ipairs|repeat|until|break)\b/g, '<span class="kw">$1</span>')
+        .replace(/(loadstring)/g, '<span class="ls">$1</span>')
+        .replace(/\b(require|print|task\.wait|task\.spawn|game|workspace|script|pairs|ipairs|tostring|tonumber|type|pcall|xpcall|error|warn)\b/g, '<span class="fn">$1</span>')
+        .replace(/("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')/g, '<span class="str">$1</span>')
+        .replace(/\b(\d+(\.\d+)?)\b/g, '<span class="num">$1</span>');
+}
+
+// ─── RENDER ────────────────────────────────────────────────────────────────
+function renderResults(scripts, query) {
+    const container = document.getElementById("resultsContainer");
+    const statsBar = document.getElementById("statsBar");
+    const resultsLabel = document.getElementById("resultsLabel");
+    const countStat = document.getElementById("countStat");
+    const queryStat = document.getElementById("queryStat");
+    const labelCount = document.getElementById("labelCount");
+
+    if (scripts.length === 0) {
+        statsBar.style.display = "none";
+        resultsLabel.style.display = "none";
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon">🤷</div>
+                <h3>Nessun script trovato</h3>
+                <p>Prova un altro nome di gioco o rimuovi i filtri</p>
+            </div>`;
+        return;
+    }
+
+    statsBar.style.display = "flex";
+    resultsLabel.style.display = "block";
+    countStat.textContent = scripts.length;
+    queryStat.textContent = `"${query}"`;
+    labelCount.textContent = scripts.length;
+
+    container.innerHTML = scripts.map(s => `
+        <div class="script-card" id="card-${s.id}">
+            <div class="card-header">
+                <div>
+                    <div class="card-title">${s.title}</div>
+                    <div class="card-meta">
+                        <span class="tag tag-game">${s.game}</span>
+                        <span class="tag tag-type">${s.type}()</span>
+                        <span class="tag tag-source">${s.source}</span>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <button class="btn-expand" onclick="toggleExpand(${s.id})">EXPAND</button>
+                    <button class="btn-copy" id="copy-${s.id}" onclick="copyScript(${s.id})">COPIA</button>
+                </div>
+            </div>
+            <div class="code-preview" id="preview-${s.id}" onclick="toggleExpand(${s.id})">
+                <code>${highlight(s.code)}</code>
+            </div>
+        </div>
+    `).join("");
+}
+
+// ─── COPY ──────────────────────────────────────────────────────────────────
+function copyScript(id) {
+    const script = SCRIPT_DB.find(s => s.id === id);
+    if (!script) return;
+
+    navigator.clipboard.writeText(script.code).then(() => {
+        const btn = document.getElementById(`copy-${id}`);
+        btn.textContent = "COPIATO ✓";
+        btn.classList.add("copied");
+        setTimeout(() => {
+            btn.textContent = "COPIA";
+            btn.classList.remove("copied");
+        }, 2000);
+    }).catch(() => {
+        // fallback
+        const ta = document.createElement("textarea");
+        ta.value = script.code;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+        const btn = document.getElementById(`copy-${id}`);
+        btn.textContent = "COPIATO ✓";
+        btn.classList.add("copied");
+        setTimeout(() => { btn.textContent = "COPIA"; btn.classList.remove("copied"); }, 2000);
+    });
+}
+
+// ─── EXPAND ────────────────────────────────────────────────────────────────
+function toggleExpand(id) {
+    const preview = document.getElementById(`preview-${id}`);
+    const btn = document.querySelector(`#card-${id} .btn-expand`);
+    if (preview.classList.contains("expanded")) {
+        preview.classList.remove("expanded");
+        btn.textContent = "EXPAND";
+        expandedCards.delete(id);
+    } else {
+        preview.classList.add("expanded");
+        btn.textContent = "COLLAPSE";
+        expandedCards.add(id);
+    }
+}
+
+// ─── SEARCH TRIGGER ────────────────────────────────────────────────────────
+function doSearch() {
+    const query = document.getElementById("searchInput").value;
+    if (!query.trim()) return;
+    currentQuery = query;
+
+    // fake loading flicker
+    document.getElementById("resultsContainer").innerHTML = `
+        <div class="loading">
+            <div class="loader"></div>
+            <div>Cercando script per "${query}"...</div>
+        </div>`;
+    document.getElementById("statsBar").style.display = "none";
+    document.getElementById("resultsLabel").style.display = "none";
+
+    setTimeout(() => {
+        const results = searchScripts(query, activeFilter);
+        renderResults(results, query);
+    }, 500);
+}
+
+// ─── EVENTS ────────────────────────────────────────────────────────────────
+document.getElementById("searchBtn").addEventListener("click", doSearch);
+document.getElementById("searchInput").addEventListener("keydown", e => {
+    if (e.key === "Enter") doSearch();
+});
+
+// filter chips
+document.querySelectorAll(".filter-chip").forEach(chip => {
+    chip.addEventListener("click", () => {
+        document.querySelectorAll(".filter-chip").forEach(c => c.classList.remove("active"));
+        chip.classList.add("active");
+        activeFilter = chip.dataset.filter;
+        if (currentQuery) doSearch();
+    });
+});
+
+// quick tags
+document.querySelectorAll(".qtag").forEach(tag => {
+    tag.addEventListener("click", () => {
+        document.getElementById("searchInput").value = tag.textContent;
+        doSearch();
+    });
+});
+</script>
+</body>
+</html>
